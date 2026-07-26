@@ -1,0 +1,33 @@
+name: Daily Morning Digest
+
+on:
+  schedule:
+    - cron: '30 2 * * *'  # 8:00 AM IST (UTC+5:30)
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  run-digest:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    
+    - name: Restore Google credentials
+      run: |
+        echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > credentials.json
+        echo "${{ secrets.GOOGLE_TOKEN }}" | base64 --decode > token.json
+    
+    - name: Run digest
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+        TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+      run: python digest.py
