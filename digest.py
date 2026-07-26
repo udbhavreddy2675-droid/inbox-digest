@@ -6,7 +6,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from groq import Groq
+from openai import OpenAI
 
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
@@ -63,19 +63,20 @@ def get_calendar_events(calendar):
     return event_list
 
 def generate_digest(emails, events):
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
     email_text = "\n\n".join(emails) if emails else "No emails in last 24 hours"
     event_text = "\n".join(events) if events else "No events today"
     
-    prompt = f"""You are an AI chief of staff for a recruiter. Look through these emails and identify:
-1. Candidates waiting for a reply
-2. Clients who need an update  
-3. Follow-ups that are about to go cold
-4. Interviews to confirm or schedule
-5. What can wait
+    prompt = f"""You are an AI chief of staff for a busy executive. Look through these emails and calendar events and create a structured morning briefing:
 
-Keep it short, actionable, formatted for WhatsApp. No fluff.
+🔴 ACTION REQUIRED (urgent, needs response today)
+🟡 FOLLOW UP (waiting on someone, or needs follow up soon)  
+🟢 FYI (low priority, can wait)
+📅 MEETINGS TODAY
+
+For each item include: who it's from, what it's about, and why it matters.
+Keep it concise and actionable. Format for WhatsApp.
 
 EMAILS (last 24 hours):
 {email_text}
@@ -84,7 +85,7 @@ CALENDAR (next 24 hours):
 {event_text}"""
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
         max_tokens=1000
     )
