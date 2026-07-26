@@ -2,18 +2,18 @@ name: Daily Morning Digest
 
 on:
   schedule:
-    - cron: '30 2 * * *'  # 8:00 AM IST (UTC+5:30)
-  workflow_dispatch:  # allows manual trigger
+    - cron: '30 2 * * *'
+  workflow_dispatch:
 
 jobs:
   run-digest:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
@@ -21,9 +21,12 @@ jobs:
       run: pip install -r requirements.txt
     
     - name: Restore Google credentials
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
       run: |
-        echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > credentials.json
-        echo "${{ secrets.GOOGLE_TOKEN }}" | base64 --decode > token.json
+        printf '%s' "$GOOGLE_CREDENTIALS" | base64 --decode > credentials.json
+        printf '%s' "$GOOGLE_TOKEN" | base64 --decode > token.json
     
     - name: Run digest
       env:
